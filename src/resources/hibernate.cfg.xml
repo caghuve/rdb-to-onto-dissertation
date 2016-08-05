@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE hibernate-configuration SYSTEM 
+"http://www.hibernate.org/dtd/hibernate-configuration-3.0.dtd">
+
+<hibernate-configuration>
+	<session-factory>
+		<property name="hibernate.dialect">org.hibernate.dialect.MySQLDialect</property>
+		<property name="hibernate.connection.driver_class">com.mysql.jdbc.Driver</property>
+		
+		<property name="hibernate.connection.url">jdbc:mysql://localhost/rdbtoonto</property>
+		<property name="hibernate.connection.username">root</property>
+		<property name="hibernate.connection.password">12345</property>
+		
+		<!--
+		<property name="hibernate.connection.url">jdbc:mysql://rdbtoonto.mysql.uhserver.com/rdbtoonto</property>
+		<property name="hibernate.connection.username">rdbtoonto</property>
+		<property name="hibernate.connection.password">rd@B2ONTO</property>
+		-->
+		<!--
+		<property name="hibernate.connection.url">jdbc:mysql://184.107.24.224/polifono_rdbtoonto</property>
+		<property name="hibernate.connection.username">polifono_poli</property>
+		<property name="hibernate.connection.password">pW$#1998tT</property>
+		-->
+		
+		<property name="hibernate.hbm2ddl.auto">update</property>
+		<property name="show_sql">true</property>
+		<property name="hibernate.current_session_context_class">thread</property>
+
+		<!-- Mapping -->
+		<mapping class="br.ufpr.bean.Database" />
+		<mapping class="br.ufpr.bean.DatabaseDomain" />
+		<mapping class="br.ufpr.bean.DatatypeDb" />
+		<mapping class="br.ufpr.bean.DatatypeOnto" />
+		<mapping class="br.ufpr.bean.DatatypeProperty" />
+		<mapping class="br.ufpr.bean.Table" />
+		<mapping class="br.ufpr.bean.Column" />
+		<mapping class="br.ufpr.bean.CheckValue" />
+		<mapping class="br.ufpr.bean.CheckSubject" />
+		<mapping class="br.ufpr.bean.ColumnCheckValue" />
+		<mapping class="br.ufpr.bean.DatabaseDomain" />
+		<mapping class="br.ufpr.bean.TableDatabaseDomain" />
+		<mapping class="br.ufpr.bean.Ontology" />
+		<mapping class="br.ufpr.bean.Class" />
+		<mapping class="br.ufpr.bean.Hierarchy" />
+		<mapping class="br.ufpr.bean.Instance" />
+		<mapping class="br.ufpr.bean.ColumnToDatatypeProperty" />
+		<mapping class="br.ufpr.bean.ObjectProperty" />
+		<mapping class="br.ufpr.bean.ColumnToObjectProperty" />
+		<mapping class="br.ufpr.bean.ObjectPropertyDomainRange" />
+		<mapping class="br.ufpr.bean.DatatypePropertyDomain" />
+		<mapping class="br.ufpr.bean.Record" />
+		<mapping class="br.ufpr.bean.Type" />
+		<!-- Mapping -->
+	</session-factory>
+</hibernate-configuration>
+
