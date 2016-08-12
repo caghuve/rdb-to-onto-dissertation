@@ -16,7 +16,7 @@ Passo a passo da instalação:
 1 - Através do Git CMD, acessar a pasta do workspace que será utilizada pelo Eclipse.
 2 - Executar o seguinte comando:
 git clone https://github.com/caghuve/rdb-to-onto.git
-3 - Abrir o Eclipse e criar um novo projeto Dynamic Web Project com o nome rdt-to-onto.
+3 - Abrir o Eclipse e criar um novo projeto Dynamic Web Project com o nome rdb-to-onto.
 4 - Adicionar o projeto ao Tomcat 7.0.37 configurado com o Java 8.
 5 - No MySQL, criar o banco rdbtoonto.
 6 - Executar o arquivo rdb-to-onto\WebContent\db\rdt-to-onto.sql no MySQL para criar as tabelas.
