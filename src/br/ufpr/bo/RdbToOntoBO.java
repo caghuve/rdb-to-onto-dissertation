@@ -11,6 +11,7 @@ import br.ufpr.bean.CheckSubject;
 import br.ufpr.bean.CheckValue;
 import br.ufpr.bean.Column;
 import br.ufpr.bean.ColumnCheckValue;
+import br.ufpr.bean.ColumnRecordValue;
 import br.ufpr.bean.ColumnToDatatypeProperty;
 import br.ufpr.bean.ColumnToObjectProperty;
 import br.ufpr.bean.Database;
@@ -19,6 +20,7 @@ import br.ufpr.bean.DatatypeDb;
 import br.ufpr.bean.DatatypeOnto;
 import br.ufpr.bean.DatatypeProperty;
 import br.ufpr.bean.DatatypePropertyDomain;
+import br.ufpr.bean.Disjoint;
 import br.ufpr.bean.Hierarchy;
 import br.ufpr.bean.Instance;
 import br.ufpr.bean.ObjectProperty;
@@ -33,6 +35,7 @@ import br.ufpr.dao.CheckValueDao;
 import br.ufpr.dao.ClassDao;
 import br.ufpr.dao.ColumnCheckValueDao;
 import br.ufpr.dao.ColumnDao;
+import br.ufpr.dao.ColumnRecordValueDao;
 import br.ufpr.dao.ColumnToDatatypePropertyDao;
 import br.ufpr.dao.ColumnToObjectPropertyDao;
 import br.ufpr.dao.DatabaseDao;
@@ -41,6 +44,7 @@ import br.ufpr.dao.DatatypeDbDao;
 import br.ufpr.dao.DatatypeOntoDao;
 import br.ufpr.dao.DatatypePropertyDao;
 import br.ufpr.dao.DatatypePropertyDomainDao;
+import br.ufpr.dao.DisjointDao;
 import br.ufpr.dao.HierarchyDao;
 import br.ufpr.dao.InstanceDao;
 import br.ufpr.dao.ObjectPropertyDao;
@@ -67,6 +71,7 @@ public class RdbToOntoBO {
 	TableDatabaseDomainDao tableDatabaseDomainDao = new TableDatabaseDomainDao();
 	OntologyDao ontologyDao = new OntologyDao();
 	ClassDao classDao = new ClassDao();
+	DisjointDao disjointDao = new DisjointDao();
 	HierarchyDao hierarchyDao = new HierarchyDao();
 	InstanceDao instanceDao = new InstanceDao();
 	DatatypePropertyDao datatypePropertyDao = new DatatypePropertyDao();
@@ -76,6 +81,7 @@ public class RdbToOntoBO {
 	ObjectPropertyDomainRangeDao objectPropertyDomainRangeDao = new ObjectPropertyDomainRangeDao();
 	DatatypePropertyDomainDao datatypePropertyDomainDao = new DatatypePropertyDomainDao();
 	RecordDao recordDao = new RecordDao();
+	ColumnRecordValueDao columnRecordValueDao = new ColumnRecordValueDao();
 	TypeDao typeDao = new TypeDao();
 
 	public Database importFile(RdbToOntoForm form) {
@@ -180,6 +186,15 @@ public class RdbToOntoBO {
 			e1.printStackTrace();
 			return null;
 		}
+		
+		try {
+			// Classes Disjuntas
+			disjointClasses(database);
+		}
+		catch (Exception e1) {
+			e1.printStackTrace();
+			return null;
+		}
 
 		return database;
 	}
@@ -225,28 +240,24 @@ public class RdbToOntoBO {
 				// Cadastrando na T002.
 				tableDao.saveOrUpdate(table); // PASSO 5
 				
-				// Apenas para tabelas não-associativas.
-				if (fields[5].equals("0")) {//if (fields[old6].equals("0")) {
-					DatabaseDomain databaseDomain = databaseDomainDao.getByDescription(database, fields[4]);//DatabaseDomain databaseDomain = databaseDomainDao.getByDescription(database, fields[old5]);
-	
-					// Se não encontrou o databaseDomain (T008) no banco, deve cadastrá-lo.
-					if (databaseDomain == null) {
-						databaseDomain = new DatabaseDomain();
-						databaseDomain.setDatabase(database);
-						databaseDomain.setDescription(fields[4].toLowerCase());//databaseDomain.setDescription(fields[old5].toLowerCase());
-						databaseDomainDao.saveOrUpdate(databaseDomain);
-					}
-	
-					TableDatabaseDomain tableDatabaseDomain = new TableDatabaseDomain();
-					tableDatabaseDomain.setTable(table);
-					tableDatabaseDomain.setDatabaseDomain(databaseDomain);
-	
-					// Cadastrando o relacionamento na T010.
-					tableDatabaseDomainDao.saveOrUpdate(tableDatabaseDomain);
+				DatabaseDomain databaseDomain = databaseDomainDao.getByDescription(database, fields[4]);//DatabaseDomain databaseDomain = databaseDomainDao.getByDescription(database, fields[old5]);
+				
+				// Se não encontrou o databaseDomain (T008) no banco, deve cadastrá-lo.
+				if (databaseDomain == null) {
+					databaseDomain = new DatabaseDomain();
+					databaseDomain.setDatabase(database);
+					databaseDomain.setDescription(fields[4].toLowerCase());//databaseDomain.setDescription(fields[old5].toLowerCase());
+					databaseDomainDao.saveOrUpdate(databaseDomain);
 				}
+
+				TableDatabaseDomain tableDatabaseDomain = new TableDatabaseDomain();
+				tableDatabaseDomain.setTable(table);
+				tableDatabaseDomain.setDatabaseDomain(databaseDomain);
+
+				// Cadastrando o relacionamento na T010.
+				tableDatabaseDomainDao.saveOrUpdate(tableDatabaseDomain);			
 			}
 		}
-
 		scanner.close();
 	}
 
@@ -324,28 +335,38 @@ public class RdbToOntoBO {
 
 		column.setTable(table);
 
-		// Se informou o datatype.
-		if (!"".equals(fields[7])) {//if (!"".equals(fields[old8])) {
-			DatatypeDb datatypeDb = datatypeDbDao.getByDescription(fields[7]); // PASSO 11//DatatypeDb datatypeDb = datatypeDbDao.getByDescription(fields[old8]); // PASSO 11
-
-			// Se encontrou o datatype no banco.
-			if (datatypeDb != null) {
-				column.setDatatypeDb(datatypeDb);
+		DatatypeDb datatypeDb = null;
+		// Verifica se informou o datatype.
+		// PASSO 11
+		if (!"".equals(fields[7])) {
+			datatypeDb = datatypeDbDao.getByDescription(fields[7]); 
+		}
+		else {
+			datatypeDb = datatypeDbDao.getByDescription("string"); 
+		}
+		
+		// Se encontrou o datatype no banco.
+		if (datatypeDb != null) {
+			column.setDatatypeDb(datatypeDb);
+		}
+		else {
+			// Deve cadastrar o datatype (T005).
+			datatypeDb = new DatatypeDb();
+			if (!"".equals(fields[7])) {
+				datatypeDb.setDescription(fields[7].toLowerCase());
 			}
 			else {
-				// Deve cadastrar o datatype (T005).
-				datatypeDb = new DatatypeDb();
-				datatypeDb.setDescription(fields[7].toLowerCase());//datatypeDb.setDescription(fields[old8].toLowerCase());
-				datatypeDbDao.saveOrUpdate(datatypeDb); // PASSO 11
-				column.setDatatypeDb(datatypeDb);
-
-				// Clonar o datatype na T018.
-				DatatypeOnto datatypeOnto = new DatatypeOnto();
-				datatypeOnto.setDescription(datatypeDb.getDescription());
-				datatypeOnto.setDatatypeDb(datatypeDb);
-				datatypeOntoDao.saveOrUpdate(datatypeOnto); // PASSO 11.1
+				datatypeDb.setDescription("string");
 			}
-		}
+			datatypeDbDao.saveOrUpdate(datatypeDb); // PASSO 11
+			column.setDatatypeDb(datatypeDb);
+
+			// Clonar o datatype na T018.
+			DatatypeOnto datatypeOnto = new DatatypeOnto();
+			datatypeOnto.setDescription(datatypeDb.getDescription());
+			datatypeOnto.setDatatypeDb(datatypeDb);
+			datatypeOntoDao.saveOrUpdate(datatypeOnto); // PASSO 11.1
+		}			
 
 		column.setPrimaryKey("1".equals(fields[8]) ? true : false);//column.setPrimaryKey("1".equals(fields[old9]) ? true : false);
 		column.setUniqueKey("1".equals(fields[9]) ? true : false); // PASSO 12.1//column.setUniqueKey("1".equals(fields[old10]) ? true : false); // PASSO 12.1
@@ -506,7 +527,11 @@ public class RdbToOntoBO {
 		for (Table table : lista) {
 			
 			if (table.isAssociative()) {
-				continue;
+
+				Column Column = columnDao.getByTableAndPrimaryKeyAndForeignKey(table.getId(),false, false);
+				if(Column == null) {
+					continue;
+				}
 			}
 			
 			br.ufpr.bean.Class c = new br.ufpr.bean.Class();
@@ -644,15 +669,17 @@ public class RdbToOntoBO {
 		String description;
 
 		for (Column column : columns) {
-			
-			// PASSO 26
-			if (column.getTable().isAssociative()) {
-				continue;
-			}
-			
+						
 			// PASSO 26
 			if (column.isPrimaryKey() || column.isForeignKey() || column.isUniqueKey()) {
 				continue;
+			}
+			// PASSO 26
+			if (column.getTable().isAssociative()) {
+				br.ufpr.bean.Class result = classDao.getByTable(column.getTable());
+				if(result == null) {
+					continue;					
+				}				
 			}
 			
 			DatatypeProperty datatypeProperty = new DatatypeProperty();			
@@ -713,13 +740,16 @@ public class RdbToOntoBO {
 		for (Column column : columns) {
 			
 			// PASSO 26
-			if (column.getTable().isAssociative()) {
+			if (column.isPrimaryKey() || column.isForeignKey() || column.isUniqueKey()) {
 				continue;
 			}
 			
 			// PASSO 26
-			if (column.isPrimaryKey() || column.isForeignKey() || column.isUniqueKey()) {
-				continue;
+			if (column.getTable().isAssociative()) {
+				br.ufpr.bean.Class result = classDao.getByTable(column.getTable());
+				if(result == null) {
+					continue;					
+				}				
 			}
 			
 			DatatypeProperty datatypeProperty = new DatatypeProperty();			
@@ -1036,7 +1066,7 @@ public class RdbToOntoBO {
 		}
 	}
 	
-	public void importRecords(RdbToOntoForm form, Database database, Ontology ontology) throws FileNotFoundException, IOException {
+	public void importRecords(RdbToOntoForm form, Database database, Ontology ontology) throws FileNotFoundException, IOException, SQLException {
 		Scanner scanner = new Scanner(form.getDatabaseStructure().getInputStream(), "UTF-8");
 
 		while (scanner.hasNextLine()) {
@@ -1069,13 +1099,26 @@ public class RdbToOntoBO {
 					newIntance.setOntology(ontology);
 					instanceDao.saveOrUpdate(newIntance); // PASSO 17.2
 				}
+				
+				//Inserir na T023
+				String[] tableColumns = fields[17].split(",", -1);
+				String[] columnValues = fields[18].split(",", -1);
+				for (int i=0; i<tableColumns.length; i++) {	
+					if(!columnValues[i].equals("")) {
+						ColumnRecordValue columnRecordValue = new ColumnRecordValue();
+						columnRecordValue.setColumn(columnDao.getByPhysicalName(table.getId(),tableColumns[i].replaceAll("\\[", "").replaceAll("\\]","")));
+						columnRecordValue.setRecord((Record) recordDao.find(Record.class, recordDao.getMaxId()));
+						columnRecordValue.setRecordValue(columnValues[i].replaceAll("\\[", "").replaceAll("\\]",""));
+						columnRecordValueDao.saveOrUpdate(columnRecordValue);
+					}
+				}		
 			}
 		}
 
 		scanner.close();
 	}
 	
-	public void importRecordsToClasses(RdbToOntoForm form, Database database, Ontology ontology) throws FileNotFoundException, IOException {
+	/*public void importRecordsToClasses(RdbToOntoForm form, Database database, Ontology ontology) throws FileNotFoundException, IOException {
 		// PASSO 34
 		//Verificar quais registros da T004 são relacionados a tabelas que possuem uma coluna com C003_PRIMARY_KEY = 1 AND C003_FOREIGN_KEY = 0.
 		@SuppressWarnings("unchecked")
@@ -1154,6 +1197,56 @@ public class RdbToOntoBO {
 				}
 			}
 		}
+	}*/
+	
+	public void importRecordsToClasses(RdbToOntoForm form, Database database, Ontology ontology) throws FileNotFoundException, IOException {
+		// PASSO 34
+		//Verificar quais registros da T004 são relacionados a tabelas que possuem uma coluna com C003_PRIMARY_KEY = 1 AND C003_FOREIGN_KEY = 0.
+		@SuppressWarnings("unchecked")
+		List<Record> records = (ArrayList<Record>) recordDao.findAll(Record.class);
+		
+		Table table;
+		Column column;
+		
+		for (Record record : records) {
+			table = null;
+			column = null;
+			
+			table = record.getTable();
+			
+			if ("C".equals(table.getDescription())) {
+				
+				// Inserir na T011.
+				br.ufpr.bean.Class c = new br.ufpr.bean.Class();
+				String name = "h" + Util.functionForImportRecords(record.getColumnvalues()); // PASSO 35
+				c.setName(name);
+				c.setOntology(ontology);
+				c.setRecord(record);
+				classDao.saveOrUpdate(c); // PASSO 35
+				
+				// Inserir na T012.
+				Hierarchy hierarchy = new Hierarchy();
+				hierarchy.setSuperClass(classDao.getByTable(table));
+				hierarchy.setSubClass(c);
+
+				hierarchyDao.saveOrUpdate(hierarchy); // PASSO 35 
+				
+				// Verificar se a tabela possui alguma coluna C003_PRIMARY_KEY = 1 AND C003_FOREIGN_KEY = 1.
+				column = columnDao.getByTableAndPrimaryKeyAndForeignKey(table.getId(), true, true);
+				
+				// Se for diferente de null, significa que a tabela não possui nenhuma coluna com C003_PRIMARY_KEY = 1 AND C003_FOREIGN_KEY = 1.
+				// Portanto, deve ser importada no PASSO 36.
+				if (column != null) {
+													
+					// Inserir na T012.
+					Hierarchy hierarchy2 = new Hierarchy();
+					hierarchy2.setSuperClass(classDao.getByTable(column.getFkTable()));
+					hierarchy2.setSubClass(c);
+
+					hierarchyDao.saveOrUpdate(hierarchy2); // PASSO 36
+				}					
+			}
+		}
 	}
 	
 	/**
@@ -1208,5 +1301,52 @@ public class RdbToOntoBO {
 			
 			datatypeOntoDao.saveOrUpdate(datatypeOnto);
 		}
+	}
+
+	/**
+	 * 
+	 * @param database
+	 */
+	public void disjointClasses(Database database) {
+		List<br.ufpr.bean.Class> classList = classDao.listAll();
+		//Verifica todas as classes
+		for (br.ufpr.bean.Class classThis : classList) {
+			for (br.ufpr.bean.Class classOther : classList) {
+				//Se as classes são diferentes
+				if (classThis.getId() != classOther.getId()) {
+					br.ufpr.bean.Hierarchy disjointSuperClasses  = hierarchyDao.getSubClass(classThis.getId(), classOther.getId());
+					br.ufpr.bean.Hierarchy disjointSubClasses = hierarchyDao.getSubClass(classOther.getId(), classThis.getId());
+					//Verifica se as classes não são subclasses
+					if (disjointSuperClasses == null && disjointSubClasses == null) {
+						List<br.ufpr.bean.Hierarchy> subClasses = (List<Hierarchy>) hierarchyDao.listSubClasses(classThis.getId());
+						//Verifica se não retornou resultado, não possui subclasse e pode criar disjoint class
+						if (subClasses.size() != 0) {
+							//Verifica todas as subclasses de ClassThis se classOther e´uma subclasse dela
+							for (br.ufpr.bean.Hierarchy subClass : subClasses) {
+								br.ufpr.bean.Hierarchy hirarchySuperClasses  = hierarchyDao.getSubClass(subClass.getSuperClass().getId(), classOther.getId());
+								br.ufpr.bean.Hierarchy hirarchySubClasses = hierarchyDao.getSubClass(classOther.getId(), subClass.getSuperClass().getId());
+								//Se nenhuma subclasse possui classOther como subclasse, gera registro para classe disjunta.
+								if (hirarchySuperClasses == null && hirarchySubClasses == null) {
+									if(disjointDao.getDisjointClass(classOther.getId(), classThis.getId()) == null){
+										Disjoint disjoint = new Disjoint();
+										disjoint.setClassD(classThis);
+										disjoint.setDisjointClass(classOther);
+										disjointDao.saveOrUpdate(disjoint); // PASSO XX
+									}
+								}		
+							}	
+						}
+						else {
+							if(disjointDao.getDisjointClass(classOther.getId(), classThis.getId()) == null){
+								Disjoint disjoint = new Disjoint();
+								disjoint.setClassD(classThis);
+								disjoint.setDisjointClass(classOther);
+								disjointDao.saveOrUpdate(disjoint); // PASSO XX
+							}
+						}
+					}					
+				}
+			}					
+		}	
 	}
 }

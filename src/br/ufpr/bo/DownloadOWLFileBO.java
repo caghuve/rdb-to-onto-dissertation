@@ -3,15 +3,19 @@ package br.ufpr.bo;
 import java.sql.SQLException;
 import java.util.List;
 
+import br.ufpr.bean.ColumnRecordValue;
 import br.ufpr.bean.DatatypeProperty;
 import br.ufpr.bean.DatatypePropertyDomain;
+import br.ufpr.bean.Disjoint;
 import br.ufpr.bean.Hierarchy;
 import br.ufpr.bean.Instance;
 import br.ufpr.bean.ObjectProperty;
 import br.ufpr.bean.ObjectPropertyDomainRange;
 import br.ufpr.dao.ClassDao;
+import br.ufpr.dao.ColumnRecordValueDao;
 import br.ufpr.dao.DatatypePropertyDao;
 import br.ufpr.dao.DatatypePropertyDomainDao;
+import br.ufpr.dao.DisjointDao;
 import br.ufpr.dao.HierarchyDao;
 import br.ufpr.dao.InstanceDao;
 import br.ufpr.dao.ObjectPropertyDao;
@@ -22,11 +26,13 @@ public class DownloadOWLFileBO {
 
 	ClassDao classDao = new ClassDao();
 	HierarchyDao hierarchyDao = new HierarchyDao();
+	DisjointDao disjointDao = new DisjointDao();
 	DatatypePropertyDao datatypePropertyDao = new DatatypePropertyDao();
 	DatatypePropertyDomainDao datatypePropertyDomainDao = new DatatypePropertyDomainDao();
 	ObjectPropertyDao objectPropertyDao = new ObjectPropertyDao();
 	ObjectPropertyDomainRangeDao objectPropertyDomainRangeDao = new ObjectPropertyDomainRangeDao();
 	InstanceDao instanceDao = new InstanceDao();
+	ColumnRecordValueDao columnRecordValueDao =  new ColumnRecordValueDao();
 
 	/**
 	 * Função utilizada para gerar o arquivo OWL.
@@ -98,31 +104,31 @@ public class DownloadOWLFileBO {
 		for (Hierarchy hierarchy : hierarchyList) {
 			file.append("<SubClassOf>");
 			file.append("<Class IRI=\"#");file.append(hierarchy.getSubClass().getName());file.append("\" />");
-			file.append("<Class IRI=\"#");file.append(hierarchy.getSuperClass().getName());file.append("\" />");
+			file.append("<Class IRI=\"#");file.append(hierarchy.getSuperClass().getName());file.append("\" />");			
 			file.append("</SubClassOf>");
 		}
 		
 		return file;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public StringBuffer setDisjointClasses() {
 		StringBuffer file = new StringBuffer();
-		
 		List<br.ufpr.bean.Class> classList = classDao.listAll();
-		
+		//Verifica todas as classes
 		for (br.ufpr.bean.Class classThis : classList) {
-			file.append("<DisjointClasses>");
-			file.append("<Class IRI=\"#");file.append(classThis.getName());file.append("\" />");
-			
-			for (br.ufpr.bean.Class classOther : classList) {
-				if (classThis.getId() != classOther.getId()) {
-					file.append("<Class IRI=\"#");file.append(classOther.getName());file.append("\" />");
+			List<br.ufpr.bean.Disjoint> disjointClassList = disjointDao.listDisjointClasses(classThis.getId());		
+			if(disjointClassList != null ) {
+						
+				for (br.ufpr.bean.Disjoint disjointClass : disjointClassList) {
+					file.append("<DisjointClasses>");
+					file.append("<Class IRI=\"#");file.append(classThis.getName());file.append("\" />");
+					file.append("<Class IRI=\"#");file.append(disjointClass.getDisjointClass().getName());file.append("\" />");
+					file.append("</DisjointClasses>");
 				}
+				
 			}
-			
-			file.append("</DisjointClasses>");
 		}
-		
 		return file;
 	}
 	
@@ -445,6 +451,29 @@ public class DownloadOWLFileBO {
 			file.append("\" /><NamedIndividual IRI=\"#");
 			file.append(instance.getDescription());
 			file.append("\" /></ClassAssertion>");
+		}
+		
+
+/*<DataPropertyAssertion>
+        <DataProperty IRI="#matricula_aluno"/>
+        <NamedIndividual IRI="#Aluno4"/>
+        <Literal datatypeIRI="http://www.w3.org/2001/XMLSchema#integer">231564</Literal>
+</DataPropertyAssertion>*/
+        
+		for (Instance instance : instanceList) {
+			List<ColumnRecordValue> columnRecordValueList = columnRecordValueDao.listAllByRecord(instance.getRecord());
+			
+			for (ColumnRecordValue columnRecordValue : columnRecordValueList) {
+				file.append("<DataPropertyAssertion>");
+				file.append("<DataProperty IRI=\"#");			
+				file.append(columnRecordValue.getRecordValue());
+				file.append("\" />");
+				
+				file.append("<Literal datatypeIRI=\"http://www.w3.org/2001/XMLSchema#integer\">");
+				file.append(instance.getDescription());
+				file.append("</Literal>");
+				file.append("</DataPropertyAssertion>");
+			}
 		}
 		
 		return file;
