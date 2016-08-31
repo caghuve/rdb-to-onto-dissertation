@@ -26,6 +26,7 @@
 		<mapping class="br.ufpr.bean.CheckSubject" />
 		<mapping class="br.ufpr.bean.ColumnCheckValue" />
 		<mapping class="br.ufpr.bean.DatabaseDomain" />
+		<mapping class="br.ufpr.bean.Disjoint" />
 		<mapping class="br.ufpr.bean.TableDatabaseDomain" />
 		<mapping class="br.ufpr.bean.Ontology" />
 		<mapping class="br.ufpr.bean.Class" />
@@ -37,6 +38,7 @@
 		<mapping class="br.ufpr.bean.ObjectPropertyDomainRange" />
 		<mapping class="br.ufpr.bean.DatatypePropertyDomain" />
 		<mapping class="br.ufpr.bean.Record" />
+		<mapping class="br.ufpr.bean.ColumnRecordValue" />
 		<mapping class="br.ufpr.bean.Type" />
 		<!-- Mapping -->
 	</session-factory>
