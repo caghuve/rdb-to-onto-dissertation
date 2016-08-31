@@ -1,4 +1,4 @@
-package br.ufpr.bean;
+package br.ufpr;
 
 import java.io.Serializable;
 

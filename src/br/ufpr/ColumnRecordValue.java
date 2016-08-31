@@ -1,4 +1,4 @@
-package br.ufpr.bean;
+package br.ufpr;
 
 import java.io.Serializable;
 
@@ -7,6 +7,9 @@ import javax.persistence.Id;
 import javax.persistence.JoinColumn;
 import javax.persistence.ManyToOne;
 import javax.persistence.Table;
+
+import br.ufpr.bean.Column;
+import br.ufpr.bean.Record;
 
 @Entity
 @Table(name = "t023_column_record_value")
