@@ -87,6 +87,7 @@ public class ColumnDao extends GenericDao {
 		return retorno;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public List<Column> getByIndDescriptionAndIndColumnCheckAndIndForeignKey(Long databaseId, boolean indDescription, boolean indColumnCheck, boolean indForeignKey) {
 		Session session = getSession();
 		Transaction tx = null;
@@ -99,16 +100,7 @@ public class ColumnDao extends GenericDao {
 			criteria.add(Restrictions.eq("indColumnCheck", indColumnCheck));
 			criteria.add(Restrictions.eq("foreignKey", indForeignKey));
 			
-			@SuppressWarnings("unchecked")
-			List<Column> columns = criteria.list();
-			
-			if (columns == null || columns.size() == 0) {
-				retorno = null;
-			}
-			else {
-				retorno = filterColumnsByDatabase(databaseId, columns);
-			}
-			
+			retorno = criteria.list();		
 			tx.commit();
 		}
 		catch (HibernateException e) {
@@ -172,6 +164,7 @@ public class ColumnDao extends GenericDao {
 		return retorno;
 	}
 	
+	@SuppressWarnings("unchecked")
 	public List<Column> getByIndForeignkey(Long databaseId, boolean indForeignKey) {
 		Session session = getSession();
 		Transaction tx = null;
@@ -181,17 +174,7 @@ public class ColumnDao extends GenericDao {
 			tx = session.beginTransaction();
 			Criteria criteria = session.createCriteria(Column.class);
 			criteria.add(Restrictions.eq("foreignKey", indForeignKey));
-			
-			@SuppressWarnings("unchecked")
-			List<Column> columns = criteria.list();
-			
-			if (columns == null || columns.size() == 0) {
-				retorno = null;
-			}
-			else {
-				retorno = filterColumnsByDatabase(databaseId, columns);
-			}
-			
+		    retorno = criteria.list();		
 			tx.commit();
 		}
 		catch (HibernateException e) {

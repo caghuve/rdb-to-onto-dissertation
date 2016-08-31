@@ -63,7 +63,7 @@ public class DatabaseDao extends GenericDao {
 	}
 	
 	public void cleanDataBase() throws SQLException {
-		String[] sqls = new String[22];
+		String[] sqls = new String[24];
 		
 		sqls[0] = "DELETE FROM t009_column_check_value";
 		sqls[1] = "DELETE FROM t006_check_value";
@@ -71,23 +71,30 @@ public class DatabaseDao extends GenericDao {
 		sqls[3] = "DELETE FROM t015_instance";
 		sqls[4] = "DELETE FROM t014_datatype_property_domain";
 		sqls[5] = "DELETE FROM t022_object_property_domain_range";
-		sqls[6] = "DELETE FROM t011_class";
+		sqls[6] = "DELETE FROM t017_disjoint_class";
 		sqls[7] = "DELETE FROM t020_column_to_datatype_property";
 		sqls[8] = "DELETE FROM t021_column_to_object_property";
 		sqls[9] = "DELETE FROM t019_object_property";
 		sqls[10] = "DELETE FROM t022_object_property_domain_range";
-		sqls[11] = "DELETE FROM t003_column";
-		sqls[12] = "DELETE FROM t010_table_db_domain";
-		sqls[13] = "DELETE FROM t008_database_domain";
-		sqls[14] = "DELETE FROM t004_record";
-		sqls[15] = "DELETE FROM t002_table";
-		sqls[16] = "DELETE FROM t013_datatype_property";
-		sqls[17] = "DELETE FROM t016_ontology";
-		sqls[18] = "DELETE FROM t001_database";
-		sqls[19] = "DELETE FROM t007_check_subject";
-		sqls[20] = "DELETE FROM t018_datatype_onto";
-		sqls[21] = "DELETE FROM t005_datatype_db";
+		sqls[11] = "DELETE FROM t023_column_record_value";
+		sqls[12] = "DELETE FROM t003_column";
+		sqls[13] = "DELETE FROM t010_table_db_domain";
+		sqls[14] = "DELETE FROM t008_database_domain";
+		sqls[15] = "DELETE FROM t011_class";
+		sqls[16] = "DELETE FROM t004_record";
+		sqls[17] = "DELETE FROM t002_table";
+		sqls[18] = "DELETE FROM t013_datatype_property";
+		sqls[19] = "DELETE FROM t016_ontology";
+		sqls[20] = "DELETE FROM t001_database";
+		sqls[21] = "DELETE FROM t007_check_subject";
+		sqls[22] = "DELETE FROM t018_datatype_onto";
+		sqls[23] = "DELETE FROM t005_datatype_db";
+		
 
-		executeQuery(sqls);
+		try {
+			executeQuery(sqls);
+		}catch (Exception e) {
+			e.printStackTrace(); 
+		}
 	}
 }
