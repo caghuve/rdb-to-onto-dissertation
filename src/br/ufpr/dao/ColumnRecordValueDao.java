@@ -16,7 +16,7 @@ import br.ufpr.bean.Record;
 
 public class ColumnRecordValueDao extends GenericDao {
 
-	public ColumnRecordValue getByColumn(Column column) {
+	public ColumnRecordValue getByColumn(Column column, String recordValue) {
 		if (column == null) {
 			return null;
 		}
@@ -29,6 +29,7 @@ public class ColumnRecordValueDao extends GenericDao {
 			tx = session.beginTransaction();
 			Criteria criteria = session.createCriteria(ColumnRecordValue.class);
 			criteria.add(Restrictions.eq("column", column));
+			criteria.add(Restrictions.eq("recordValue", recordValue));
 			
 			try {
 				retorno = (ColumnRecordValue) criteria.list().get(0);
@@ -61,6 +62,32 @@ public class ColumnRecordValueDao extends GenericDao {
 			tx = session.beginTransaction();
 			Criteria criteria = session.createCriteria(ColumnRecordValue.class);
 			criteria.add(Restrictions.eq("record", record));
+			retorno = criteria.list();
+			tx.commit();
+		}
+		catch (HibernateException e) {
+			if (tx != null) {
+				tx.rollback();
+			}
+			e.printStackTrace(); 
+		}
+		finally {
+			session.close(); 
+		}
+
+		return retorno;
+	}
+	
+	@SuppressWarnings("unchecked")
+	public List<ColumnRecordValue> listAllByColumn(Column column) {
+		Session session = getSession();
+		Transaction tx = null;
+		List<ColumnRecordValue> retorno = null;
+
+		try {
+			tx = session.beginTransaction();
+			Criteria criteria = session.createCriteria(ColumnRecordValue.class);
+			criteria.add(Restrictions.eq("column", column));
 			retorno = criteria.list();
 			tx.commit();
 		}

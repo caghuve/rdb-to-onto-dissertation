@@ -257,4 +257,37 @@ public class ColumnDao extends GenericDao {
 
 		return retorno;
 	}
+	
+	public Column getByTableAndForeignKey(long tableId, boolean foreignKey) {
+		Session session = getSession();
+		Transaction tx = null;
+		Column retorno = null;
+
+		try {
+			tx = session.beginTransaction();
+			Criteria criteria = session.createCriteria(Column.class);
+			criteria.add(Restrictions.eq("foreignKey", foreignKey));
+			criteria.add(Restrictions.eq("table.id", tableId));
+			
+			try {
+				retorno = (Column) criteria.list().get(0);
+			}
+			catch(Exception e) {
+				retorno = null;
+			}
+			
+			tx.commit();
+		}
+		catch (HibernateException e) {
+			if (tx != null) {
+				tx.rollback();
+			}
+			e.printStackTrace(); 
+		}
+		finally {
+			session.close(); 
+		}
+
+		return retorno;
+	}
 }

@@ -1206,11 +1206,13 @@ public class RdbToOntoBO {
 		List<Record> records = (ArrayList<Record>) recordDao.findAll(Record.class);
 		
 		Table table;
-		Column column;
+		Column columnFk;
+		Column columnSubClass;
+		ColumnRecordValue columnRecordValue;
 		
 		for (Record record : records) {
 			table = null;
-			column = null;
+			columnFk = null;
 			
 			table = record.getTable();
 			
@@ -1225,25 +1227,44 @@ public class RdbToOntoBO {
 				classDao.saveOrUpdate(c); // PASSO 35
 				
 				// Inserir na T012.
+				//Para cada registro e gerada uma subclasse para a respectiva tabela do registro.
 				Hierarchy hierarchy = new Hierarchy();
 				hierarchy.setSuperClass(classDao.getByTable(table));
 				hierarchy.setSubClass(c);
 
 				hierarchyDao.saveOrUpdate(hierarchy); // PASSO 35 
 				
-				// Verificar se a tabela possui alguma coluna C003_PRIMARY_KEY = 1 AND C003_FOREIGN_KEY = 1.
-				column = columnDao.getByTableAndPrimaryKeyAndForeignKey(table.getId(), true, true);
+				// Verificar se a tabela possui alguma coluna  C003_FOREIGN_KEY = 1.
+				columnFk = columnDao.getByTableAndForeignKey(table.getId(), true);
 				
-				// Se for diferente de null, significa que a tabela não possui nenhuma coluna com C003_PRIMARY_KEY = 1 AND C003_FOREIGN_KEY = 1.
+				// Se for diferente de null, significa que a tabela  possui coluna com C003_FOREIGN_KEY = 1.
 				// Portanto, deve ser importada no PASSO 36.
-				if (column != null) {
-													
-					// Inserir na T012.
-					Hierarchy hierarchy2 = new Hierarchy();
-					hierarchy2.setSuperClass(classDao.getByTable(column.getFkTable()));
-					hierarchy2.setSubClass(c);
+				if (columnFk != null) {
+					
+					//List Com todos os registros na T023 para essa column FK - pegar 0 C004_record, C003_column_id e C023_column value				
+					//select T023.c003_column_id, T023.C004_record_id, T023.c023_column_value  from rdbtoonto.t023_column_record_value T023  where T023.C003_COLUMN_ID= 31098
+					List<ColumnRecordValue> columnRecordValues = (ArrayList<ColumnRecordValue>) columnRecordValueDao.listAllByRecord(record);
+										
+					for (ColumnRecordValue columnRecordValue2 : columnRecordValues) {
+						//get column_id na tabela de Origem, passando o Column.physical_name e o TAble_id_FK
+						columnSubClass = columnDao.getByPhysicalName(columnFk.getFkTable().getId(), columnFk.getPhysicalName());
+						if (columnRecordValue2.getColumn().getPhysicalName().equals(columnSubClass.getPhysicalName())) {
+							//buscar pela t023, registro desta column para a T002_table_id_FK cuando C023_column_value = List.c023_column_value
+							if(columnSubClass != null) {
+								columnRecordValue = columnRecordValueDao.getByColumn(columnSubClass, columnRecordValue2.getRecordValue());
+		
+								if(columnRecordValue != null) {
+									
+									// Inserir na T012.
+									Hierarchy hierarchy2 = new Hierarchy();
+									hierarchy2.setSuperClass(classDao.getByRecord(columnRecordValue.getRecord()));
+									hierarchy2.setSubClass(c);
 
-					hierarchyDao.saveOrUpdate(hierarchy2); // PASSO 36
+									hierarchyDao.saveOrUpdate(hierarchy2); // PASSO 36
+								}
+							}	
+						}			
+					}			
 				}					
 			}
 		}

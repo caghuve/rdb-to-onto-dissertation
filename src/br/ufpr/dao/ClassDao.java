@@ -9,6 +9,7 @@ import org.hibernate.Transaction;
 import org.hibernate.criterion.Restrictions;
 
 import br.ufpr.bean.CheckSubject;
+import br.ufpr.bean.Record;
 import br.ufpr.bean.Table;
 
 public class ClassDao extends GenericDao {
@@ -51,6 +52,37 @@ public class ClassDao extends GenericDao {
 			tx = session.beginTransaction();
 			Criteria criteria = session.createCriteria(br.ufpr.bean.Class.class);
 			criteria.add(Restrictions.eq("checkSubject", checkSubject));
+			
+			try {
+				retorno = (br.ufpr.bean.Class) criteria.list().get(0);
+			}
+			catch (Exception e) {
+				retorno = null;
+			}
+			tx.commit();
+		}
+		catch (HibernateException e) {
+			if (tx != null) {
+				tx.rollback();
+			}
+			e.printStackTrace(); 
+		}
+		finally {
+			session.close(); 
+		}
+
+		return retorno;
+	}
+	
+	public br.ufpr.bean.Class getByRecord(Record record) {
+		Session session = getSession();
+		Transaction tx = null;
+		 br.ufpr.bean.Class retorno = null;
+
+		try {
+			tx = session.beginTransaction();
+			Criteria criteria = session.createCriteria(br.ufpr.bean.Class.class);
+			criteria.add(Restrictions.eq("record", record));
 			
 			try {
 				retorno = (br.ufpr.bean.Class) criteria.list().get(0);
