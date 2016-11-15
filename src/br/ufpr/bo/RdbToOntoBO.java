@@ -86,6 +86,12 @@ public class RdbToOntoBO {
 
 	public Database importFile(RdbToOntoForm form) {
 
+		long init;
+		long end;
+		long diff; 
+		init = System.currentTimeMillis();
+		System.out.println("Inicio " + init + " segundos");
+		
 		Database database = new Database();
 		Ontology ontology = null;
 
@@ -187,15 +193,19 @@ public class RdbToOntoBO {
 			return null;
 		}
 		
-		try {
+		/*try {
 			// Classes Disjuntas
 			disjointClasses(database);
 		}
 		catch (Exception e1) {
 			e1.printStackTrace();
 			return null;
-		}
-
+		}*/
+		
+		end = System.currentTimeMillis();
+		diff = end - init;
+		System.out.println("Demorou " + (diff / 1000) + " segundos");
+		
 		return database;
 	}
 
@@ -542,7 +552,7 @@ public class RdbToOntoBO {
 				name = Util.funcaoMaiuscula(table.getPhysicalName()); // PASSO 6.1a
 			}
 
-			name = "E" + name; // PASSO 6.1b
+			//name = "E" + name; // PASSO 6.1b
 			c.setName(name);
 			c.setOntology(ontology);
 			classDao.saveOrUpdate(c); // PASSO 6.1
@@ -584,7 +594,7 @@ public class RdbToOntoBO {
 				br.ufpr.bean.Class c = new br.ufpr.bean.Class();
 				c.setCheckSubject(checkSubject);
 				name = Util.funcaoMaiuscula(checkSubject.getDescription());
-				name = "V" + name;
+				//name = "V" + name;
 				c.setName(name);
 				c.setOntology(ontology);
 				classDao.saveOrUpdate(c); // PASSO 17.1
@@ -631,7 +641,7 @@ public class RdbToOntoBO {
 					Instance newIntance = new Instance();
 
 					description = clazz.getName();
-					description = description + "_" + Util.funcaoMaiuscula(checkValue.getDescription());
+					description = Util.funcaoMinuscula(description) + "_" + Util.funcaoMaiuscula(checkValue.getDescription());
 					newIntance.setDescription(description);
 
 					newIntance.setClazz(clazz);
@@ -683,7 +693,7 @@ public class RdbToOntoBO {
 			}
 			
 			DatatypeProperty datatypeProperty = new DatatypeProperty();			
-			description = "a" + Util.funcaoMaiuscula(column.getLogicalName());
+			description = Util.funcaoMinuscula(column.getLogicalName());
 			datatypeProperty.setDescription(description);
 			datatypeProperty.setOntology(ontology);
 			datatypeProperty.setIndDescription(true); // PASSO 19.1
@@ -753,7 +763,7 @@ public class RdbToOntoBO {
 			}
 			
 			DatatypeProperty datatypeProperty = new DatatypeProperty();			
-			description = "a" + Util.funcaoMaiuscula(column.getLogicalName());
+			description = Util.funcaoMinuscula(column.getLogicalName());
 			datatypeProperty.setDescription(description);
 			datatypeProperty.setOntology(ontology);
 
@@ -816,6 +826,7 @@ public class RdbToOntoBO {
 	 * @param ontology
 	 */
 	public void importObjectProperty01(Database database, Ontology ontology) {
+		//UK
 		// Colunas com C003_IND_COLUMN_CHECK = 0 AND C003_IND_PRIMARY_KEY = 0 AND C003_IND_FOREIGN_KEY = 0 AND C003_IND_UNIQUE_KEY = 1
 		List<Column> columns = columnDao.getByIndsColumncheckPrimarykeyForeignkeyUniquekey(database.getId(), false, false, false, true);
 		
@@ -838,7 +849,7 @@ public class RdbToOntoBO {
 			}
 			
 			ObjectProperty objectProperty = new ObjectProperty();			
-			description = "uK" + Util.funcaoMaiuscula(column.getLogicalName());
+			description = "has" + Util.funcaoMaiuscula(column.getLogicalName());
 			objectProperty.setDescription(description);
 			objectProperty.setOntology(ontology);
 			objectProperty.setMinCardinality(true); // PASSO 18.3
@@ -867,6 +878,7 @@ public class RdbToOntoBO {
 	 * @param ontology
 	 */
 	public void importObjectProperty02(Database database, Ontology ontology) {
+		//PK
 		// Colunas com C003_IND_COLUMN_CHECK = 0 AND C003_IND_PRIMARY_KEY = 1 AND C003_IND_FOREIGN_KEY = 0 AND C003_IND_UNIQUE_KEY = 0
 		List<Column> columns = columnDao.getByIndsColumncheckPrimarykeyForeignkeyUniquekey(database.getId(), false, true, false, false);
 		
@@ -889,7 +901,7 @@ public class RdbToOntoBO {
 			}
 			
 			ObjectProperty objectProperty = new ObjectProperty();			
-			description = "pK" + Util.funcaoMaiuscula(column.getLogicalName());
+			description = "has" + Util.funcaoMaiuscula(column.getLogicalName());
 			objectProperty.setDescription(description);
 			objectProperty.setOntology(ontology);
 			objectProperty.setMinCardinality(true); // PASSO 18.3
@@ -918,6 +930,7 @@ public class RdbToOntoBO {
 	 * @param ontology
 	 */
 	public void importObjectProperty03(Database database, Ontology ontology) {
+		//COLUMN_CHECK 
 		// Colunas com C003_IND_COLUMN_CHECK = 1 AND C003_IND_PRIMARY_KEY = 0 AND C003_IND_FOREIGN_KEY = 0 AND C003_IND_UNIQUE_KEY = 0.
 		List<Column> columns = columnDao.getByIndsColumncheckPrimarykeyForeignkeyUniquekey(database.getId(), true, false, false, false);
 		
@@ -940,7 +953,7 @@ public class RdbToOntoBO {
 			}
 			
 			ObjectProperty objectProperty = new ObjectProperty();			
-			description = "tem" + Util.funcaoMaiuscula(column.getLogicalName());
+			description = Util.funcaoMinuscula(column.getLogicalName());
 			objectProperty.setDescription(description);
 			objectProperty.setOntology(ontology);
 			
@@ -987,7 +1000,7 @@ public class RdbToOntoBO {
 			
 			ObjectProperty objectProperty = new ObjectProperty();			
 			//description = "kM" + Util.funcaoMaiuscula(column.getLogicalName());
-			description = "kM" + Util.funcaoMaiuscula(column.getTable().getLogicalName()) + "Tem" + Util.funcaoMaiuscula(column.getLogicalName()); // PASSO 27
+			description = "has" + Util.funcaoMaiuscula(column.getLogicalName()); // PASSO 27
 			objectProperty.setDescription(description);
 			objectProperty.setOntology(ontology);
 			objectProperty.setMinCardinality(true); // PASSO 27.1
@@ -1035,8 +1048,10 @@ public class RdbToOntoBO {
 			}
 			
 			ObjectProperty objectProperty = new ObjectProperty();			
-			description = "kS" + Util.funcaoMaiuscula(column.getTable().getLogicalName()) + "Tem" + Util.funcaoMaiuscula(column.getLogicalName()); // PASSO 30
+			description = "has" + Util.funcaoMaiuscula(column.getLogicalName()); // PASSO 30
 			objectProperty.setDescription(description);
+			objectProperty.setMinCardinality(true); // PASSO 18.3
+			objectProperty.setIndInverseFunctional(true); // PASSO 18.4
 			objectProperty.setOntology(ontology);
 			
 			// Inserir na T019.
@@ -1075,7 +1090,7 @@ public class RdbToOntoBO {
 			String[] fields = line.split(";", -1);
 
 			// Inserir as instancias.
-			if (fields[0].equals("I")) {
+			if (fields[0].equals("R")) {
 				System.out.println(line);
 
 				Record record = new Record();
@@ -1093,7 +1108,8 @@ public class RdbToOntoBO {
 				if ("D".equals(table.getDescription())) {
 					// Inserir na T015.
 					Instance newIntance = new Instance();
-					String description = "i" + Util.functionForImportRecords(record.getColumnvalues()); // PASSO 37
+					//String description = "i" + Util.functionForImportRecords(record.getColumnvalues()); // PASSO 37
+					String description = Util.functionForImportRecords(record.getColumnvalues()); // PASSO 37
 					newIntance.setDescription(description);
 					newIntance.setClazz(classDao.getByTable(table));
 					newIntance.setOntology(ontology);
@@ -1220,7 +1236,7 @@ public class RdbToOntoBO {
 				
 				// Inserir na T011.
 				br.ufpr.bean.Class c = new br.ufpr.bean.Class();
-				String name = "h" + Util.functionForImportRecords(record.getColumnvalues()); // PASSO 35
+				String name = Util.functionForImportRecords(record.getColumnvalues()); // PASSO 35
 				c.setName(name);
 				c.setOntology(ontology);
 				c.setRecord(record);

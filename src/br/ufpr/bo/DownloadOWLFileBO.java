@@ -44,7 +44,7 @@ public class DownloadOWLFileBO {
 		StringBuffer file = createOWLHeader();
 		file.append(setDeclaration());
 		file.append(setSubClassOf());
-		file.append(setDisjointClasses());
+		//file.append(setDisjointClasses());
 		file.append(setDataPropertyDomain());
 		file.append(setObjectProperty());
 		file.append(setInstance());
@@ -274,15 +274,15 @@ public class DownloadOWLFileBO {
     		
     		for (DatatypePropertyDomain datatypePropertyDomain : datatypePropertyDomainList) {
     			//file.append("<Declaration><DataProperty IRI=\"#descricao_grupo\" /></Declaration>");
-    			file.append("<Declaration><DataProperty IRI=\"#");file.append(datatypeProperty.getDescription() + "_" + datatypePropertyDomain.getClassDomain().getName());file.append("\" /></Declaration>");
+    			file.append("<Declaration><DataProperty IRI=\"#");file.append(Util.funcaoMinuscula(datatypePropertyDomain.getClassDomain().getName()) + Util.funcaoMaiuscula(datatypeProperty.getDescription()));file.append("\" /></Declaration>");
     			
     			file.append("<DataPropertyDomain>");
-        		file.append("<DataProperty IRI=\"#");file.append(datatypeProperty.getDescription() + "_" + datatypePropertyDomain.getClassDomain().getName());file.append("\" />");
+        		file.append("<DataProperty IRI=\"#");file.append(Util.funcaoMinuscula(datatypePropertyDomain.getClassDomain().getName()) + Util.funcaoMaiuscula(datatypeProperty.getDescription()));file.append("\" />");
     			file.append("<Class IRI=\"#");file.append(datatypePropertyDomain.getClassDomain().getName());file.append("\" />");
     			file.append("</DataPropertyDomain>");
     			
     			file.append("<SubDataPropertyOf>");
-    			file.append("<DataProperty IRI=\"#");file.append(datatypeProperty.getDescription() + "_" + datatypePropertyDomain.getClassDomain().getName());file.append("\" />");
+    			file.append("<DataProperty IRI=\"#");file.append(Util.funcaoMinuscula(datatypePropertyDomain.getClassDomain().getName()) + Util.funcaoMaiuscula(datatypeProperty.getDescription()));file.append("\" />");
     			file.append("<DataProperty IRI=\"#");file.append(datatypeProperty.getDescription());file.append("\" />");
     			file.append("</SubDataPropertyOf>");
     			
@@ -377,6 +377,11 @@ public class DownloadOWLFileBO {
 			file.append("<Declaration><ObjectProperty IRI=\"#");
 			file.append(objectProperty.getDescription());
 			file.append("\"/></Declaration>");
+			
+			//file.append("<Declaration><ObjectProperty IRI=\"#eRestricaoSexoDe\" /></Declaration>");
+			file.append("<Declaration><ObjectProperty IRI=\"#");
+			file.append(Util.functionForInverseObjectProperties(objectProperty.getDescription()));
+			file.append("\" /></Declaration>");
 	
 			//file.append("<InverseObjectProperties><ObjectProperty IRI=\"#temRestricaoSexo\" /><ObjectProperty IRI=\"#eRestricaoSexoDe\" /></InverseObjectProperties>");
 			file.append("<InverseObjectProperties><ObjectProperty IRI=\"#");
@@ -385,10 +390,6 @@ public class DownloadOWLFileBO {
 			file.append(Util.functionForInverseObjectProperties(objectProperty.getDescription()));
 			file.append("\" /></InverseObjectProperties>");
 			
-			//file.append("<Declaration><ObjectProperty IRI=\"#eRestricaoSexoDe\" /></Declaration>");
-			file.append("<Declaration><ObjectProperty IRI=\"#");
-			file.append(Util.functionForInverseObjectProperties(objectProperty.getDescription()));
-			file.append("\" /></Declaration>");
 			
 			objectPropertyDomainRange = objectPropertyDomainRangeDao.findByObjectProperty(objectProperty);		
 			
@@ -396,6 +397,20 @@ public class DownloadOWLFileBO {
 				
 				// Se C019_MIN_CARDINALITY = 0
 				if (!objectProperty.getMinCardinality()) {
+					
+					if (objectPropertyDomainRange.getClassDomain() != null) {
+						file.append("<ObjectPropertyDomain><ObjectProperty IRI=\"#");
+						file.append(objectProperty.getDescription());
+						file.append("\" /><Class IRI=\"#");
+						file.append(objectPropertyDomainRange.getClassDomain().getName());
+						file.append("\" /></ObjectPropertyDomain>");
+						
+						file.append("<ObjectPropertyDomain><ObjectProperty IRI=\"#");
+						file.append(Util.functionForInverseObjectProperties(objectProperty.getDescription()));
+						file.append("\" /><Class IRI=\"#");
+						file.append(objectPropertyDomainRange.getClassDomain().getName());
+						file.append("\" /></ObjectPropertyDomain>");
+					}
 					file.append("<ObjectPropertyRange><ObjectProperty IRI=\"#");
 					file.append(objectProperty.getDescription());
 					file.append("\" /><Class IRI=\"#");
@@ -411,6 +426,21 @@ public class DownloadOWLFileBO {
 				}
 				// Se C019_MIN_CARDINALITY = 1
 				else {
+					
+					if (objectPropertyDomainRange.getClassDomain() != null) {
+						file.append("<ObjectPropertyDomain><ObjectProperty IRI=\"#");
+						file.append(objectProperty.getDescription());
+						file.append("\" /><Class IRI=\"#");
+						file.append(objectPropertyDomainRange.getClassDomain().getName());
+						file.append("\" /></ObjectPropertyDomain>");
+						
+						file.append("<ObjectPropertyDomain><ObjectProperty IRI=\"#");
+						file.append(Util.functionForInverseObjectProperties(objectProperty.getDescription()));
+						file.append("\" /><Class IRI=\"#");
+						file.append(objectPropertyDomainRange.getClassDomain().getName());
+						file.append("\" /></ObjectPropertyDomain>");
+					}
+					
 					//file.append("<ObjectPropertyRange><ObjectProperty IRI=\"#temCodigodoProcedimento\" /><ObjectMinCardinality cardinality=\"1\"><ObjectProperty IRI=\"#temCodigodoProcedimento\" /><Class IRI=\"#eProcedimento\" /></ObjectMinCardinality></ObjectPropertyRange>");
 					file.append("<ObjectPropertyRange><ObjectProperty IRI=\"#");
 					file.append(objectProperty.getDescription());
@@ -421,7 +451,7 @@ public class DownloadOWLFileBO {
 					file.append("\" /></ObjectMinCardinality></ObjectPropertyRange>");
 					
 					file.append("<ObjectPropertyRange><ObjectProperty IRI=\"#");
-					file.append(objectProperty.getDescription());
+					file.append(Util.functionForInverseObjectProperties(objectProperty.getDescription()));
 					file.append("\" /><ObjectMinCardinality cardinality=\"1\"><ObjectProperty IRI=\"#");
 					file.append(Util.functionForInverseObjectProperties(objectProperty.getDescription()));
 					file.append("\" /><Class IRI=\"#");

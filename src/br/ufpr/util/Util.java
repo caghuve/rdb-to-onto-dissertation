@@ -171,10 +171,10 @@ public class Util {
 			return "";
 		}
 
-		if ("Tem".equals(str.substring(3))) {
-			str = "e" + str.substring(3) + "De";
+		if ("has".equals(str.substring(3))) {
+			str = "is" + str.substring(3) + "Of";
 		} else {
-			str = "e" + str.substring(2) + "De";
+			str = "is" + str.substring(3) + "Of";
 		}
 		
 

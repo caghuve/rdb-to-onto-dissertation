@@ -69,7 +69,7 @@ public class ColumnDao extends GenericDao {
 				retorno = null;
 			}
 			else { 
-				retorno = filterColumnsByDatabase(databaseId, columns);
+				retorno = columns;
 			}
 			
 			tx.commit();
@@ -146,7 +146,7 @@ public class ColumnDao extends GenericDao {
 				retorno = null;
 			}
 			else {
-				retorno = filterColumnsByDatabase(databaseId, columns);
+				retorno = columns;
 			}
 			
 			tx.commit();
